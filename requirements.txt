@@ -1,0 +1,4 @@
+ruamel.yaml==0.11.11
+clint==0.5.1
+Jinja2==2.8
+requests==2.10.0

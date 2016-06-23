@@ -1,0 +1,12 @@
+*.pyc
+**/*.egg-info/
+
+env/
+docs/
+out/
+
+.tox/
+.coverage
+
+*.geany
+*.csv

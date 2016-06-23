@@ -1,0 +1,140 @@
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+description: Open-O use case for NFV.
+
+metadata:
+    id: GS-O
+    vendor: Open-O
+    version: 1.0
+
+#imports:
+#    - types.yaml
+
+topology_template:
+    inputs:
+        flavor_id:
+            type: string
+    
+    node_templates:
+        forwarding_path:
+            type: tosca.nodes.nfv.FP
+
+        # Nodes in VNF network
+    
+        thin_cpe:
+            type: tosca.nodes.nfv.VNF
+            requirements:
+                forward:
+                    node: vcpe
+                    relationship: vnf_forwards_to
+
+        vcpe:
+            type: tosca.nodes.nfv.VNF
+            requirements:
+                forward:
+                    node: v_firewall
+                    relationship: vnf_forwards_to
+
+        v_firewall:
+            type: tosca.nodes.nfv.VNF
+            requirements:
+                forward:
+                    node: dc_gateway
+                    relationship: vnf_forwards_to
+
+        dc_gateway:
+            type: tosca.nodes.nfv.VNF
+            requirements:
+                forward:
+                    node: database_server
+                    relationship: vnf_forwards_to
+
+        database_server:
+            type: tosca.nodes.Database
+        
+        # Nodes in VL network
+
+        traffic_in:
+            type: tosca.nodes.nfv.CP
+            requirements:
+                traffic:
+                    node: enterprise_lan
+                    relationship: traffic_links_to
+
+        enterprise_lan:
+            type: tosca.nodes.nfv.VL.ELAN
+            requirements:
+                forward:
+                    node: enterptise_to_pop
+                    relationship: vl_forwards_to
+
+        enterprise_to_pop:
+            type: tosca.nodes.nfv.VL.ELine
+            requirements:
+                forward:
+                    node: pop_lan
+                    relationship: vl_forwards_to
+
+        poplan:
+            type: tosca.nodes.nfv.VL.ELine
+            requirements:
+                forward:
+                    node: wan
+                    relationship: vl_forwards_to
+
+        wan:
+            type: tosca.nodes.nfv.VL.ELAN
+            requirements:
+                forward:
+                    node: dclan
+                    relationship: vl_forwards_to
+
+        dclan:
+            type: tosca.nodes.nfv.VL.ELAN
+            requirements:
+                traffic:
+                    node: traffic_out
+                    relationship: traffic_links_to
+
+        traffic_out:
+            type: tosca.nodes.nfv.CP
+            
+    relationship_templates:
+        traffic_links_to:
+            type: tosca.relationships.nfv.VirtualLinksTo
+            interfaces:
+                configure:
+                    script: /opt/scripts/configure_traffic_links_to.sh
+                    inputs:
+                        ip_address: { get_property: [ TARGET, ip_address ] }
+                        port: { get_property: [ TARGET, virtual_link_port ] }
+
+        vl_forwards_to:
+            type: tosca.relationships.nfv.FowardsTo
+            interfaces:
+                configure:
+                    script: /opt/scripts/configure_vl_forwards_to.sh
+                    inputs:
+                        ip_address: { get_property: [ TARGET, ip_address ] }
+                        port: { get_property: [ TARGET, forwarding_port ] }
+                    
+        vnf_forwards_to:
+            type: tosca.relationships.nfv.FowardsTo
+            interfaces:
+                configure:
+                    script: /opt/scripts/configure_vnf_forwards_to.sh
+                    inputs:
+                        ip_address: { get_property: [ TARGET, ip_address ] }
+                        port: { get_property: [ TARGET, forwarding_port ] }
+
+    groups:
+        vnnfg:
+            type: tosca.groups.nfv.VNFFG
+            members: [forwarding_path]
+            properties:
+                vendor: Unknown
+                version: 1.0
+                number_of_endpoints: 1
+                dependent_virtual_link: []
+                connection_point: [traffic_in, traffic_out]
+                constituent_vnfs: [thin_cpe, vcpe, v_firewall, dc_gateway, database_server]
