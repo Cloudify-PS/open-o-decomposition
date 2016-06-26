@@ -3,7 +3,7 @@ set -e
 
 HERE=$(dirname "$(readlink -f "$0")")
 OPEN_O_SRC="$HERE/src"
-ARIA_SRC="$HERE/../aria2/src/aria"
+ARIA_SRC="$HERE/../aria-ng/src/aria"
 
 PYTHONPATH="$OPEN_O_SRC:$ARIA_SRC:$PYTHONPATH" \
 python -m open_o.nfv_o.server "$@"
