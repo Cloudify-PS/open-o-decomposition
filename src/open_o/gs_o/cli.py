@@ -45,8 +45,8 @@ def deploy_sdn_o(host, port, data):
 
 def save_yaml(name, data):
     with indent(2):
-        puts('Saving %s.yaml...' % name)
-    with open('%s.yaml' % name, 'w') as f:
+        puts('Saving tmp/%s.yaml...' % name)
+    with open('tmp/%s.yaml' % name, 'w') as f:
         f.write(data)
 
 def delete_node_template(presenter, n):
