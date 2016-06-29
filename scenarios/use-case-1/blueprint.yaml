@@ -45,8 +45,8 @@ metadata:
     version: 1.0
 
 imports:
-    - open-o-types.yaml
-    - my-brand-types.yaml
+    - ../common/open-o-types.yaml
+    - ../common/my-brand-types.yaml
 
 topology_template:
     inputs:

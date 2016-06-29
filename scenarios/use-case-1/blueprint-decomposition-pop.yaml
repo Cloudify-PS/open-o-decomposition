@@ -1,0 +1,125 @@
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+description: |
+    Use case: E-LAN between enterprise and datacenter.
+    
+    This is the decomposition of the master blueprint for the PoP NFV-O.
+    
+    The topology contains the enterprise nodes and the PoP NFVs,
+    including the virtual link to the WAN. However, it does not contain
+    anything related to the forwarding graph: that is for the GS-O to
+    use in order to compose the commands for the SDN-O.
+
+metadata:
+    id: use-case-1-decomposition-pop
+    vendor: Open-O
+    version: 1.0
+
+imports:
+    - ../common/open-o-types.yaml
+    - ../common/my-brand-types.yaml
+
+topology_template:
+    inputs:
+        flavor:
+            description: |
+                The OpenStack virtual machine flavor. For simplicity,
+                we'll just use one flavor for all our machines.
+            type: string
+            default: m1.large
+    
+    node_templates:
+
+        # Enterprise
+    
+        enterprise_lan:
+            description: |
+                We do not configure the enterprise LAN from this
+                blueprint, however we include it here in order to
+                complete the topology.
+            type: tosca.nodes.network.Network
+
+        enterprise_cpe:
+            description: |
+                The router sitting at the customer site ("thin" CPE).
+            type: my-brand.EnterpriseRouter
+            requirements:
+                lan:
+                    relationship: tosca.relationships.network.LinksTo
+                    node: enterprise_lan
+                uplink:
+                    relationship: tosca.relationships.ConnectsTo
+                    node: v_cpe
+
+        # PoP
+
+        v_cpe:
+            description: |
+                Customer's virtual CPE at the PoP.
+                
+                (Note that this is a logical instance of the vCPE,
+                representing our route for this particular PoP service
+                chain. The real router instance could in fact support
+                many customer service chains simultaneously, effectively
+                appearing in other topologies.)
+            type: my-brand.VirtualRouter
+            requirements:
+                uplink:
+                    relationship: tosca.relationships.ConnectsTo
+                    node: v_firewall
+                host:
+                    relationships: tosca.relationships.HostedOn
+                    node: pop_host
+
+        v_firewall:
+            description: |
+                Customer's virtual firewall at the PoP.
+                
+                Note that we require two uplinks from here: the physical
+                uplink to the WAN, and the "virtual" link to a
+                the connection point used for composing a forwarding
+                graph. 
+            type: my-brand.VirtualFirewall
+            requirements:
+                uplink:
+                    relationship: tosca.relationships.network.LinksTo
+                    node: wan
+                virtual_uplink:
+                    relationship: tosca.relationships.nfv.VirtualLinksTo
+                    node: pop_connection_point
+                host:
+                    relationships: tosca.relationships.HostedOn
+                    node: pop_host
+        
+        pop_connection_point:
+            description: |
+                Virtual connection point at the PoP.
+                
+                This is where the TOSCA forwarding path meets the
+                SDN world, manifest here as two required relationships:
+                to the connection point at the datacenter (forwarding
+                path) and to the E-Line (SDN).
+            type: tosca.nodes.nfv.CP
+            requirements:
+                forward:
+                    relationship: tosca.relationships.nfv.ForwardsTo
+                    node: dc_connection_point
+                wan:
+                    relationship: tosca.relationships.nfv.VirtualBindsTo
+                    node: wan
+
+        pop_host:
+            description: |
+                For simplicity, we'll run all our VNFs on a one host.
+            type: open-o.openstack.Compute
+            properties:
+                flavor: { get_input: flavor }
+
+        # WAN
+
+        wan:
+            description: |
+                The WAN is a "black box" as far as we're concerned
+                here. It is an E-Line (point-to-point carrier
+                Ethernet) that is configured at the SDN level.
+            type: tosca.nodes.nfv.VL.ELine
