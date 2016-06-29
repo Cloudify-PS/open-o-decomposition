@@ -50,8 +50,20 @@ imports:
 
 topology_template:
     inputs:
-        enterprise_gateway_ip:
+        pop_endpoint:
+            description: |
+                The PoP endpoint exposed to the enterprise. 
             type: string
+        wan_endpoint:
+            description: |
+                The WAN endpoint exposed to the PoP.
+            type: string
+        flavor:
+            description: |
+                The OpenStack virtual machine flavor. For simplicity,
+                we'll just use one flavor for all our machines.
+            type: string
+            default: m1.large
     
     node_templates:
 
@@ -63,8 +75,6 @@ topology_template:
                 blueprint, however we include it here in order to
                 complete the topology.
             type: tosca.nodes.network.Network
-            properties:
-                gateway_ip: { get_input: enterprise_gateway_ip }
 
         enterprise_cpe:
             description: |
@@ -77,6 +87,8 @@ topology_template:
                 uplink:
                     relationship: tosca.relationships.ConnectsTo
                     node: v_cpe
+                    properties:
+                        endpoint: { get_input: pop_endpoint }
 
         # PoP
 
@@ -85,7 +97,7 @@ topology_template:
                 Customer's virtual CPE at the PoP.
                 
                 (Note that this is a logical instance of the vCPE,
-                representing our route for this particular service
+                representing our route for this particular PoP service
                 chain. The real router instance could in fact support
                 many customer service chains simultaneously, effectively
                 appearing in other topologies.)
@@ -94,6 +106,9 @@ topology_template:
                 uplink:
                     relationship: tosca.relationships.ConnectsTo
                     node: v_firewall
+                host:
+                    relationships: tosca.relationships.HostedOn
+                    node: pop_host
 
         v_firewall:
             description: |
@@ -108,9 +123,14 @@ topology_template:
                 uplink:
                     relationship: tosca.relationships.network.LinksTo
                     node: wan
+                    properties:
+                        endpoint: { get_input: wan_endpoint }
                 virtual_uplink:
                     relationship: tosca.relationships.nfv.VirtualLinksTo
                     node: pop_connection_point
+                host:
+                    relationships: tosca.relationships.HostedOn
+                    node: pop_host
         
         pop_connection_point:
             description: |
@@ -128,6 +148,13 @@ topology_template:
                 wan:
                     relationship: tosca.relationships.nfv.VirtualBindsTo
                     node: wan
+
+        pop_host:
+            description: |
+                For simplicity, we'll run all our VNFs on a one host.
+            type: open-o.openstack.Compute
+            properties:
+                flavor: { get_input: flavor }
 
         # WAN
 
@@ -164,19 +191,38 @@ topology_template:
                 virtual_uplink:
                     relationship: tosca.relationships.nfv.VirtualLinksTo
                     node: dc_connection_point
-                service_chain:
+                dc_service_chain:
                     relationship: tosca.relationships.ConnectsTo
                     node: database_server
+                host:
+                    relationships: tosca.relationships.HostedOn
+                    node: dc_vnf_host
 
         database_server:
             description: |
-                To keep this example simple our service chain is a
-                single database server.
+                To keep this example simple, our datacenter service
+                chain is a single database server.
                 
                 TOSCA of course allows for very rich and detailed
                 modeling of complex service chains, supporting
                 cloud security groups, scalability, healing, etc.
             type: tosca.nodes.Database
+            requirements:
+                host:
+                    relationships: tosca.relationships.HostedOn
+                    node: dc_database_host
+
+        dc_vnf_host:
+            description: |
+                For simplicity, we'll run all our VNFs on a one host.
+            type: open-o.openstack.Compute
+            properties:
+                flavor: { get_input: flavor }
+
+        dc_database_host:
+            type: open-o.openstack.Compute
+            properties:
+                flavor: { get_input: flavor }
 
         # Forwarding graph
         
@@ -215,7 +261,7 @@ topology_template:
                     node: database_server
 
     groups:
-        vnnfg:
+        vnffg:
             description: |
                 The VNF forwarding graph is a group containing both
                 forwarding paths.
