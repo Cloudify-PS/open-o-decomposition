@@ -5,7 +5,7 @@ description: |
     
     In this scenario the client has an office with an enterprise LAN and
     the requirement is to provide LAN access to a database server
-    sitting at a remote datacenter over a carrier WAN connection  We
+    sitting at a remote datacenter over a carrier WAN connection. We
     will achieve this by creating and configuring standard VNFs from the
     Open-O catalog and use SDN to enable traffic.
     
@@ -86,8 +86,9 @@ topology_template:
                 
                 (Note that this is a logical instance of the vCPE,
                 representing our route for this particular service
-                chain. The same actual router instance could in fact
-                support many customer service chains simultaneously.)
+                chain. The real router instance could in fact support
+                many customer service chains simultaneously, effectively
+                appearing in other topologies.)
             type: my-brand.VirtualRouter
             requirements:
                 uplink:
@@ -169,8 +170,8 @@ topology_template:
 
         database_server:
             description: |
-                As mentioned, to keep this example simple our service
-                chain is a single database server.
+                To keep this example simple our service chain is a
+                single database server.
                 
                 TOSCA of course allows for very rich and detailed
                 modeling of complex service chains, supporting
