@@ -1,0 +1,23 @@
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+#
+# Mock types from Open-O catalog.
+#
+# In the real catalog these will be actual VNF products, pacakaged via
+# the VNOB (VNF On-Boarding process). Each package will include
+# detailed metadata, including TOSCA type definitions to be imported
+# by the blueprint, and scripts or other plugins that perform the
+# lifecycle operations.
+#
+# These are merely mock types with no actual implementations.
+#
+
+node_types:
+    my-brand.EnterpriseRouter:
+        derived_from: open-o.GenericEnterpriseRouter
+
+    my-brand.VirtualRouter:
+        derived_from: open-o.VirtualRouter
+
+    my-brand.VirtualFirewall:
+        derived_from: open-o.VirtualFirewall

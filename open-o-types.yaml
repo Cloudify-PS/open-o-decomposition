@@ -1,0 +1,91 @@
+tosca_definitions_version: tosca_simple_yaml_1_0
+
+#
+# Open-O base types
+#
+
+node_types:
+    open-o.GenericEnterpriseRouter:
+        description: |
+            A generic physical Ethernet TCP/IP router (wired and/or
+            WiFi) that sits at the customer's enterprise LANs (CPE:
+            Customer Premises Equipment).
+            
+            For the purposes of NFV, we care only about its ability
+            to function as the egde of a forwarding graph, via the
+            "uplink" endpoint.
+            
+            In some cases, the responsibility for configuring the router
+            is with the customer, in which case the uplink would be
+            provided as an input to the blueprint. However, in other
+            cases the customer may provide us with a management entry
+            point allowing us to configure the uplink remotely, likely
+            via an HTTP or SSH interface. This would happen by
+            configuring its IP routing table, via the "configure"
+            operation on the tosca.interfaces.node.lifecycle.Standard
+            interface using the included properties.
+            
+            This generic type should be sub-classed to support the
+            various brands and models of routers supported by the
+            carrier, as each will likely require its own specialized
+            configuration scripts.
+        derived_from: tosca.nodes.Root
+        capabilities:
+            uplink:
+                type: tosca.capabilities.Endpoint
+        properties:
+            management_ip_address:
+                type: string
+            management_port:
+                type: integer
+            management_username:
+                type: string
+            management_password:
+                type: string
+        interfaces:
+            tosca.interfaces.node.lifecycle.Standard:
+                configure:
+                    implementation /opt/generic-router/configure.sh
+    
+    open-o.VirtualRouter:
+        description: |
+            Base type for virtual TCP/IP routers.
+            
+            For the purpose of NFV, they provide two or more virtual
+            links, allowing them to serve as nodes within a forwarding
+            graph.
+            
+            These are often useful for adding an extra "hop" at the PoP
+            behind a physical router (CPE) that sits at the customer's
+            premise. Because this virtual router in entirely under our
+            control we can here control all routing for the customer.
+            
+            This generic type should be sub-classed to support the
+            various brands and models of virtual routers in the
+            Open-O catalog. This generic type provides two virtual
+            links, but real products may provide more than two link
+            with complex routing configurations.
+        derived_from: tosca.nodes.nfv.VNF
+        capabilities:
+            link:
+                type: tosca.capabilities.nfv.VirtualLinkable
+                occurrences: 2
+
+    open-o.VirtualFirewall:
+        description: |
+            Base type for dedicated virtual TCP/IP firewalls.
+            
+            For the purpose of NFV, they function as a passthrough node
+            within a forwarding graph, and thus always provide two virtual
+            links (incoming and outgoing).
+            
+            Often used for providing security and isolation for
+            enterprise customers at the PoP.
+        derived_from: tosca.nodes.nfv.VNF
+        capabilities:
+            link:
+                type: tosca.capabilities.nfv.VirtualLinkable
+                occurrences: 2
+
+    open-o.LinearFP:
+        derived_from: tosca.nodes.nfv.FP
