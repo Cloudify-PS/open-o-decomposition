@@ -50,14 +50,6 @@ imports:
 
 topology_template:
     inputs:
-        pop_endpoint:
-            description: |
-                The PoP endpoint exposed to the enterprise. 
-            type: string
-        wan_endpoint:
-            description: |
-                The WAN endpoint exposed to the PoP.
-            type: string
         flavor:
             description: |
                 The OpenStack virtual machine flavor. For simplicity,
@@ -87,8 +79,6 @@ topology_template:
                 uplink:
                     relationship: tosca.relationships.ConnectsTo
                     node: v_cpe
-                    properties:
-                        endpoint: { get_input: pop_endpoint }
 
         # PoP
 
@@ -123,8 +113,6 @@ topology_template:
                 uplink:
                     relationship: tosca.relationships.network.LinksTo
                     node: wan
-                    properties:
-                        endpoint: { get_input: wan_endpoint }
                 virtual_uplink:
                     relationship: tosca.relationships.nfv.VirtualLinksTo
                     node: pop_connection_point
