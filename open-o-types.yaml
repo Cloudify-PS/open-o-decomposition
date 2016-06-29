@@ -88,4 +88,8 @@ node_types:
                 occurrences: 2
 
     open-o.LinearFP:
+        description: |
+            Forwarding paths can take many forms. This sub-class marks
+            linear paths, where one node forwards to a single next node
+            in a series.
         derived_from: tosca.nodes.nfv.FP
