@@ -51,7 +51,7 @@ node_types:
         description: |
             Base type for virtual TCP/IP routers.
             
-            For the purpose of NFV, they provide two or more virtual
+            For the purpose of NFV, they provide one or more virtual
             links, allowing them to serve as nodes within a forwarding
             graph.
             
@@ -69,14 +69,13 @@ node_types:
         capabilities:
             link:
                 type: tosca.capabilities.nfv.VirtualLinkable
-                occurrences: 2
 
     open-o.VirtualFirewall:
         description: |
             Base type for dedicated virtual TCP/IP firewalls.
             
             For the purpose of NFV, they function as a passthrough node
-            within a forwarding graph, and thus always provide two virtual
+            within a forwarding graph, and thus always provide two
             links (incoming and outgoing).
             
             Often used for providing security and isolation for
@@ -85,7 +84,6 @@ node_types:
         capabilities:
             link:
                 type: tosca.capabilities.nfv.VirtualLinkable
-                occurrences: 2
 
     open-o.LinearFP:
         description: |
